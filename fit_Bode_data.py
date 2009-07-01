@@ -1,3 +1,8 @@
+'''
+This file will fit some bode data.
+I dont know if I care right now I just want to test git.
+'''
+
 from pylab import *
 from scipy import *
 from scipy import optimize
@@ -12,6 +17,7 @@ reload(txt_data_processing)
 import rwkbode
 reload(rwkbode)
 
+from IPython.Debugger import Pdb
 #from txt_data_processing import load_avebode_data_set, \
 #     load_time_domain_data_set, merge_trunc_ave_data_sets
 
@@ -131,9 +137,45 @@ pylab_util.SetPhaseLim(cl_fignum, [-200, 10])
 
 
 #accel/theta system ID
+def a_theta_tf(X):
+    g = X[0]
+    wn = X[1]
+    z = X[2]
+    den = [1, 2*wn*z, wn**2]
+    num = [g*wn**2,0,0]
+    TF = controls.TransferFunction(num,den)
+    return TF
+
+def _build_a_theta_fit_bode(X, f_in=f):
+    TF = a_theta_tf(X)
+    bode = rwkbode.Bode_From_TF(TF, f_in, input='theta', output='a')
+    return bode
+
+def my_a_theta_cost(X):
+    bode = _build_a_theta_fit_bode(X)
+    dB_evect = (bode.dBmag()-a_theta_fit_bode.dBmag())**2
+    dB_cost = dB_evect.sum()
+    phase_evect = (bode.phase-a_theta_fit_bode.phase)**2
+    phase_cost = phase_evect.sum()
+    return dB_cost+0.1*phase_cost
+
+a_theta_fit_bode = log_data_set.find_bode('a','theta')
+a_theta_fit_bode.phase = squeeze(a_theta_fit_bode.phase)
+a_theta_fit_bode.mag = squeeze(a_theta_fit_bode.mag)
+
 a_theta_fignum = 12
 a_theta_bode =  raw_data_set.find_bode('a','theta')
 rwkbode.GenBodePlot(a_theta_fignum, f_raw, a_theta_bode)
+Xa_ig = [0.35e-2, 2.5*2*pi, 0.02]
+ig_a_theta_bode = _build_a_theta_fit_bode(Xa_ig, f_in=f_raw)
+Xa_fit = optimize.fmin(my_a_theta_cost, Xa_ig)
+a_theta_bode_fit_res = _build_a_theta_fit_bode(Xa_fit, f_in=f_raw)
+rwkbode.GenBodePlot(a_theta_fignum, f, a_theta_fit_bode, \
+                    linetype='go', clear=False)
+#rwkbode.GenBodePlot(a_theta_fignum, f_raw, ig_a_theta_bode, \
+#                    linetype='g-', clear=False)
+rwkbode.GenBodePlot(a_theta_fignum, f_raw, a_theta_bode_fit_res, \
+                    linetype='k-', clear=False)
 pylab_util.SetAllXlims(a_theta_fignum, freqlim)
 pylab_util.SetMagLim(a_theta_fignum, [-20, 30])
 pylab_util.SetPhaseLim(a_theta_fignum, [-10, 200])
