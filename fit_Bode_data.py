@@ -21,7 +21,7 @@ from IPython.Debugger import Pdb
 #from txt_data_processing import load_avebode_data_set, \
 #     load_time_domain_data_set, merge_trunc_ave_data_sets
 
-data_dir = '/home/ryan/siue/Research/PSoC_Research/SLFR_RTP/SRF_2009/June_17_2009'
+data_dir = 'June_17_2009'
 import sys
 if data_dir not in sys.path:
     sys.path.append(data_dir)
