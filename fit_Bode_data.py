@@ -11,6 +11,7 @@ import pylab_util
 
 import os
 import controls
+reload(controls)
 import txt_data_processing
 reload(txt_data_processing)
 
@@ -38,6 +39,7 @@ raw_name = 'closed_loop_swept_sine_no_accel_fb_avebodes'
 raw_data_set = txt_data_processing.load_avebode_data_set(raw_name)
 raw_act_bode = raw_data_set.find_bode('theta','v')
 raw_cl_bode = raw_data_set.find_bode('theta','u')
+raw_a_theta_d_bode = raw_data_set.find_bode('a','u')
 f_raw = raw_data_set.f
 
 def my_ol_model(X):
@@ -168,8 +170,13 @@ a_theta_bode =  raw_data_set.find_bode('a','theta')
 rwkbode.GenBodePlot(a_theta_fignum, f_raw, a_theta_bode)
 Xa_ig = [0.35e-2, 2.5*2*pi, 0.02]
 ig_a_theta_bode = _build_a_theta_fit_bode(Xa_ig, f_in=f_raw)
-Xa_fit = optimize.fmin(my_a_theta_cost, Xa_ig)
+rerun_theta_a = 0
+if rerun_theta_a:
+    Xa_fit = optimize.fmin(my_a_theta_cost, Xa_ig)
+else:
+    Xa_fit = array([  3.43130384e-03,   1.56045083e+01,   1.99006751e-02])
 a_theta_bode_fit_res = _build_a_theta_fit_bode(Xa_fit, f_in=f_raw)
+a_theta_fit_TF = a_theta_tf(Xa_fit)
 rwkbode.GenBodePlot(a_theta_fignum, f, a_theta_fit_bode, \
                     linetype='go', clear=False)
 #rwkbode.GenBodePlot(a_theta_fignum, f_raw, ig_a_theta_bode, \
@@ -180,6 +187,19 @@ pylab_util.SetAllXlims(a_theta_fignum, freqlim)
 pylab_util.SetMagLim(a_theta_fignum, [-20, 30])
 pylab_util.SetPhaseLim(a_theta_fignum, [-10, 200])
 
+#a/theta_d Verification
+a_theta_d_TF = cltf*a_theta_fit_TF
+a_theta_d_bode = rwkbode.Bode_From_TF(a_theta_d_TF, f_raw, \
+                                      input='theta_d', output='a')
+a_theta_d_fignum = 13
+rwkbode.GenBodePlot(a_theta_d_fignum, f_raw, raw_a_theta_d_bode)
+rwkbode.GenBodePlot(a_theta_d_fignum, f_raw, a_theta_d_bode, \
+                    linetype='k-', clear=False)
+pylab_util.SetAllXlims(a_theta_d_fignum, freqlim)
+pylab_util.SetMagLim(a_theta_d_fignum, [-30, 20])
+pylab_util.SetPhaseLim(a_theta_d_fignum, [-200, 200])
+
+
 
 #Time Domain Verification
 #td_ds_name = 'closed_loop_swept_sine_no_accel_fb_time_domain'
@@ -189,9 +209,28 @@ step_path = os.path.join(data_dir, step_name)
 step_td = txt_data_processing.Data_File(step_path)
 step_fignum = 20
 step_td.Time_Plot(fignum=step_fignum)
-
-theta_step_cl_model = cltf.lsim(step_td.u, step_td.t)
+t = step_td.t
+u = step_td.u
+a = step_td.a
+theta_step_cl_model = cltf.lsim(u, t)
 figure(step_fignum)
-plot(step_td.t, theta_step_cl_model)
+plot(t, theta_step_cl_model)
+
+a_step_cl_model = a_theta_fit_TF.lsim(theta_step_cl_model, t)
+plot(t, a_step_cl_model)
+#filter accel exp signal
+from scipy import signal
+#B, A = signal.filter_design.butter(2, 0.01)
+#a_filt = signal.lfilter(B, A, a, axis=-1)
+my_butter = controls.ButterworthFilter(50.0)
+my_a_filt = my_butter.lsim(a, t)
+figure(100)
+clf()
+plot(t,a)
+#plot(t,a, label='$a_{filtered}$')
+plot(t,my_a_filt, label='$a_{myfilt}$')
+
+## figure(step_fignum)
+## plot(t,my_a_filt, label='$a_{myfilt}$')
 
 show()
