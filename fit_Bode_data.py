@@ -220,17 +220,12 @@ a_step_cl_model = a_theta_fit_TF.lsim(theta_step_cl_model, t)
 plot(t, a_step_cl_model)
 #filter accel exp signal
 from scipy import signal
-#B, A = signal.filter_design.butter(2, 0.01)
-#a_filt = signal.lfilter(B, A, a, axis=-1)
-my_butter = controls.ButterworthFilter(50.0)
-my_a_filt = my_butter.lsim(a, t)
-figure(100)
-clf()
-plot(t,a)
-#plot(t,a, label='$a_{filtered}$')
-plot(t,my_a_filt, label='$a_{myfilt}$')
+B, A = signal.filter_design.butter(2, 50.0/250)#f_c/f_Nyquist
+a_filt = signal.lfilter(B, A, a, axis=-1)
 
-## figure(step_fignum)
-## plot(t,my_a_filt, label='$a_{myfilt}$')
+figure(100)
+plot(t,a)
+plot(t,a_filt, label='$a_{filtered}$')
+plot(t,a_step_cl_model, label='$a_{model}$')
 
 show()
