@@ -9,11 +9,13 @@ import controls
 #batch of steps with multiple kp's and multiple amp's (or a list of 1
 #if you prefer).  n steps per set
 kp = 1.0
-kplist = [1.0]
-amplist = [50, 100, 150]
+kplist = arange(1,10.5,1)
+#amplist = [50, 100, 150]
+amplist = [50]
 
 stopn = 2000
-N = 3
+#N = 3
+N = 1
 
 mytest = SLFR_RTP.P_control_Test(kp)
 

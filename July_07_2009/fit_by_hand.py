@@ -75,5 +75,5 @@ rwkbode.GenBodePlot(a_theta_fi, raw_f, model_bode_c2, clear=False, \
                     linetype='-')
 pylab_util.SetPhaseLim(a_theta_fi, [-200, 200])
 pylab_util.SetMagLim(a_theta_fi, [-10, 45])
-
+pylab_util.SetFreqLim(a_theta_fi, [0.5, 30])
 show()

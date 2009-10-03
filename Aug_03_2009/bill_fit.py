@@ -1,3 +1,4 @@
+from pylab import *
 from scipy import *
 import systemid
 reload(systemid)
@@ -17,9 +18,9 @@ theta_v_bode = ave_data_set.avebodes[0]
 f = ave_data_set.f
 freq_data = frequency_data_from_rwkbode(f, theta_v_bode)
 
-num = 'g*p'
+num = 'g'
 den = 's*(s+p)'
-ig_dict = {'g':10.0,'p':10.0*2*pi}
+ig_dict = {'g':400.0,'p':10.0*2*pi}
 model = Model(num, den, ig_dict)
 
 model.calc_freq_data(freq_data.f)
@@ -28,7 +29,7 @@ opt_dict = fit_freq(model,freq_data)
 opt_model = model.copy(var_dict=opt_dict)
 opt_model.calc_freq_data(freq_data.f)
 
-freq_data.plot_bode(label='exp',clear=True)
+freq_data.plot_bode(fignum=1, label='exp',clear=True)
 model.plot_bode(label='initial guess',clear=False)
 opt_model.plot_bode(label='optimized',clear=False)
 
@@ -39,10 +40,15 @@ usecols = (0,3,4)
 step_data = data.time_data_file(sdfn)
 step_data.read(usecols,skiprows=2)
 
-step_data.plot_output(fignum=2,label='Exp.')
+step_data.plot_output(fignum=2,label='Exp.', clear=True)
 opt_model.plot_resp(step_data.t,step_data.input,fignum=2,\
-                    clear=False,label='Opt. Model')
+                     clear=False,label='Opt. Model')
 time_opt_dict = fit_time(model, step_data)
+time_opt_model = model.copy(var_dict=time_opt_dict)
+time_opt_model.plot_resp(step_data.t, step_data.input, fignum=2, \
+                        clear=False, label='Time Opt. Model')
+time_opt_model.calc_freq_data(freq_data.f)
+time_opt_model.plot_bode(fignum=1, label='time optimized',clear=False)
 
 #savefig('2dof_step_plot')
 
